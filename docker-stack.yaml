@@ -291,5 +291,4 @@ services:
       placement:
         constraints: [node.hostname == brick29.blockchain.skcc.com]
 
-
 # volumes: {}
