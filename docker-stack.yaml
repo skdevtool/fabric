@@ -27,6 +27,11 @@ services:
     deploy:
       placement:
         constraints: [node.hostname == brick28.blockchain.skcc.com]
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://169.56.90.141:12201"
+        tag: 'ca_peerOrg1'
 
   ca1:
     image: hyperledger/fabric-ca
@@ -50,6 +55,11 @@ services:
     deploy:
       placement:
         constraints: [node.hostname == brick28.blockchain.skcc.com]
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://169.56.90.141:12201"
+        tag: 'ca_peerOrg2'
 
   couchdb0:
     image: nexus.sk.com/fabric-couchdb
@@ -127,6 +137,11 @@ services:
     deploy:
       placement:
         constraints: [node.hostname == brick28.blockchain.skcc.com]
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://169.56.90.141:12201"
+        tag: 'orderer.example.com'
 
   peer0-org1-example-com:
     image: nexus.sk.com/fabric-peer
@@ -167,6 +182,11 @@ services:
         delay: 10s
       placement:
         constraints: [node.hostname == brick29.blockchain.skcc.com]
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://169.56.90.141:12202"
+        tag: 'peer0.org1.example.com'
 
   peer0-org2-example-com:
     image: nexus.sk.com/fabric-peer
@@ -208,6 +228,11 @@ services:
         delay: 10s
       placement:
         constraints: [node.hostname == brick29.blockchain.skcc.com]
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://169.56.90.141:12203"
+        tag: 'peer0.org2.example.com'
 
   peer1-org1-example-com:
     image: nexus.sk.com/fabric-peer
@@ -248,7 +273,12 @@ services:
       update_config:
         delay: 10s
       placement:
-        constraints: [node.hostname == brick29.blockchain.skcc.com]  
+        constraints: [node.hostname == brick29.blockchain.skcc.com]
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://169.56.90.141:12204"
+        tag: 'peer1.org1.example.com'
 
   peer1-org2-example-com:
     image: nexus.sk.com/fabric-peer
@@ -290,6 +320,11 @@ services:
         delay: 10s
       placement:
         constraints: [node.hostname == brick29.blockchain.skcc.com]
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://169.56.90.141:12205"
+        tag: 'peer1.org2.example.com'
 
 
 # volumes: {}

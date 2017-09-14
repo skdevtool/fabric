@@ -2,7 +2,7 @@
 pipeline {
 	agent any
 	stages {
-                stage('Clean') {
+                stage('Clean Docker Images') {
                 	steps {
                         	sh "make docker-clean"
                 	}
