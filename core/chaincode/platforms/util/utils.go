@@ -162,7 +162,7 @@ func DockerBuild(opts DockerBuildOptions) error {
 	if err != nil {
 		logger.Debugf("Image %s does not exist locally, attempt pull", opts.Image)
 
-		err = client.PullImage(docker.PullImageOptions{Repository: opts.Image}, docker.AuthConfiguration{})
+		err = client.PullImage(docker.PullImageOptions{Repository: opts.Image}, docker.AuthConfiguration{"admin", "admin123", "", "nexus.sk.com"})
 		if err != nil {
 			return fmt.Errorf("Failed to pull %s: %s", opts.Image, err)
 		}

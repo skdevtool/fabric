@@ -1,0 +1,295 @@
+version: '3.3'
+
+networks:  
+  fabric-net:
+    external: true
+
+services:
+  ca0:
+    image: hyperledger/fabric-ca
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.org1.example.com-cert.pem
+      --ca.keyfile /etc/hyperledger/fabric-ca-server-config/7f28a2fa10ab48cc3ce5b914fdfa8cad0d37d11a608110ec429cf174bf641635_sk
+      -b admin:adminpw -d'
+    environment:
+      FABRIC_CA_HOME: /etc/hyperledger/fabric-ca-server
+      FABRIC_CA_SERVER_CA_NAME: ca-org1
+      FABRIC_CA_SERVER_TLS_CERTFILE: /etc/hyperledger/fabric-ca-server-config/ca.org1.example.com-cert.pem
+      FABRIC_CA_SERVER_TLS_ENABLED: 'true'
+      FABRIC_CA_SERVER_TLS_KEYFILE: /etc/hyperledger/fabric-ca-server-config/7f28a2fa10ab48cc3ce5b914fdfa8cad0d37d11a608110ec429cf174bf641635_sk
+    ports:
+    - 7054:7054
+    volumes:
+    - /home/administrator/provision/generated/crypto/peerOrganizations/org1.example.com/ca:/etc/hyperledger/fabric-ca-server-config:rw
+    networks:
+      fabric-net:
+        aliases:
+          - ca_peerOrg1
+    deploy:
+      placement:
+        constraints: [node.hostname == brick28.blockchain.skcc.com]
+
+  ca1:
+    image: hyperledger/fabric-ca
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.org2.example.com-cert.pem
+      --ca.keyfile /etc/hyperledger/fabric-ca-server-config/71828942aa9aee732c836cbdaafabcc3b15755ab2a2d89a789f8570ca76d3533_sk
+      -b admin:adminpw -d'
+    environment:
+      FABRIC_CA_HOME: /etc/hyperledger/fabric-ca-server
+      FABRIC_CA_SERVER_CA_NAME: ca-org2
+      FABRIC_CA_SERVER_TLS_CERTFILE: /etc/hyperledger/fabric-ca-server-config/ca.org2.example.com-cert.pem
+      FABRIC_CA_SERVER_TLS_ENABLED: 'true'
+      FABRIC_CA_SERVER_TLS_KEYFILE: /etc/hyperledger/fabric-ca-server-config/71828942aa9aee732c836cbdaafabcc3b15755ab2a2d89a789f8570ca76d3533_sk
+    ports:
+    - 8054:7054
+    volumes:
+    - /home/administrator/provision/generated/crypto/peerOrganizations/org2.example.com/ca:/etc/hyperledger/fabric-ca-server-config:rw
+    networks:
+      fabric-net:
+        aliases:
+          - ca_peerOrg2
+    deploy:
+      placement:
+        constraints: [node.hostname == brick28.blockchain.skcc.com]
+
+  couchdb0:
+    image: nexus.sk.com/fabric-couchdb
+    ports:
+    - 5984:5984
+    networks:
+      fabric-net:
+        aliases:
+          - couchdb0
+    deploy:
+      placement:
+        constraints: [node.hostname == brick29.blockchain.skcc.com]
+
+  couchdb1:
+    image: nexus.sk.com/fabric-couchdb
+    ports:
+    - 6984:5984
+    networks:
+      fabric-net:
+        aliases:
+          - couchdb1
+    deploy:
+      placement:
+        constraints: [node.hostname == brick29.blockchain.skcc.com]
+
+  couchdb2:
+    image: nexus.sk.com/fabric-couchdb
+    ports:
+    - 7984:5984
+    networks:
+      fabric-net:
+        aliases:
+          - couchdb2
+    deploy:
+      placement:
+        constraints: [node.hostname == brick29.blockchain.skcc.com]
+
+  couchdb3:
+    image: nexus.sk.com/fabric-couchdb
+    ports:
+    - 8984:5984
+    networks:
+      fabric-net:
+        aliases:
+          - couchdb3
+    deploy:
+      placement:
+        constraints: [node.hostname == brick29.blockchain.skcc.com]
+
+  orderer-example-com:
+    image: nexus.sk.com/fabric-orderer
+    command: orderer
+    environment:
+      ORDERER_GENERAL_GENESISFILE: /var/hyperledger/orderer/genesis.block
+      ORDERER_GENERAL_GENESISMETHOD: file
+      ORDERER_GENERAL_LISTENADDRESS: 0.0.0.0
+      ORDERER_GENERAL_LOCALMSPDIR: /var/hyperledger/orderer/msp
+      ORDERER_GENERAL_LOCALMSPID: OrdererMSP
+      ORDERER_GENERAL_LOGLEVEL: debug
+      ORDERER_GENERAL_TLS_CERTIFICATE: /var/hyperledger/orderer/tls/server.crt
+      ORDERER_GENERAL_TLS_ENABLED: 'true'
+      ORDERER_GENERAL_TLS_PRIVATEKEY: /var/hyperledger/orderer/tls/server.key
+      ORDERER_GENERAL_TLS_ROOTCAS: '[/var/hyperledger/orderer/tls/ca.crt]'
+    ports:
+    - 7050:7050
+    volumes:
+    - /home/administrator/provision/channel-artifacts/genesis.block:/var/hyperledger/orderer/genesis.block:rw
+    - /home/administrator/provision/generated/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/var/hyperledger/orderer/msp:rw
+    - /home/administrator/provision/generated/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/tls:/var/hyperledger/orderer/tls:rw
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    networks:
+      fabric-net:
+        aliases:
+          - orderer.example.com
+    deploy:
+      placement:
+        constraints: [node.hostname == brick28.blockchain.skcc.com]
+
+  peer0-org1-example-com:
+    image: nexus.sk.com/fabric-peer
+    command: peer node start
+    depends_on:
+    - couchdb0
+    environment:
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb0:5984
+      CORE_LEDGER_STATE_STATEDATABASE: CouchDB
+      CORE_LOGGING_LEVEL: DEBUG
+      CORE_PEER_ADDRESS: peer0.org1.example.com:7051
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer0.org1.example.com:7051
+      CORE_PEER_GOSSIP_ORGLEADER: 'false'
+      CORE_PEER_GOSSIP_USELEADERELECTION: 'true'
+      CORE_PEER_ID: peer0.org1.example.com
+      CORE_PEER_LOCALMSPID: Org1MSP
+      CORE_PEER_PROFILE_ENABLED: 'true'
+      CORE_PEER_TLS_CERT_FILE: /etc/hyperledger/fabric/tls/server.crt
+      CORE_PEER_TLS_ENABLED: 'true'
+      CORE_PEER_TLS_KEY_FILE: /etc/hyperledger/fabric/tls/server.key
+      CORE_PEER_TLS_ROOTCERT_FILE: /etc/hyperledger/fabric/tls/ca.crt
+      CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE: fabric-net
+      CORE_VM_ENDPOINT: unix:///host/var/run/docker.sock
+    ports:
+    - 7051:7051
+    - 7053:7053
+    volumes:
+    - /home/administrator/provision/generated/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp:/etc/hyperledger/fabric/msp:rw
+    - /home/administrator/provision/generated/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls:/etc/hyperledger/fabric/tls:rw
+    - /var/run:/host/var/run:rw
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    networks:
+      fabric-net:
+        aliases:
+          - peer0.org1.example.com
+    deploy:
+      update_config:
+        delay: 10s
+      placement:
+        constraints: [node.hostname == brick29.blockchain.skcc.com]
+
+  peer0-org2-example-com:
+    image: nexus.sk.com/fabric-peer
+    command: peer node start
+    depends_on:
+    - couchdb2
+    environment:
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb2:5984
+      CORE_LEDGER_STATE_STATEDATABASE: CouchDB
+      CORE_LOGGING_LEVEL: DEBUG
+      CORE_PEER_ADDRESS: peer0.org2.example.com:7051
+      CORE_PEER_GOSSIP_BOOTSTRAP: peer0.org2.example.com:7051
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer0.org2.example.com:7051
+      CORE_PEER_GOSSIP_ORGLEADER: 'false'
+      CORE_PEER_GOSSIP_USELEADERELECTION: 'true'
+      CORE_PEER_ID: peer0.org2.example.com
+      CORE_PEER_LOCALMSPID: Org2MSP
+      CORE_PEER_PROFILE_ENABLED: 'true'
+      CORE_PEER_TLS_CERT_FILE: /etc/hyperledger/fabric/tls/server.crt
+      CORE_PEER_TLS_ENABLED: 'true'
+      CORE_PEER_TLS_KEY_FILE: /etc/hyperledger/fabric/tls/server.key
+      CORE_PEER_TLS_ROOTCERT_FILE: /etc/hyperledger/fabric/tls/ca.crt
+      CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE: fabric-net
+      CORE_VM_ENDPOINT: unix:///host/var/run/docker.sock
+    ports:
+    - 9051:7051
+    - 9053:7053
+    volumes:
+    - /home/administrator/provision/generated/crypto/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp:/etc/hyperledger/fabric/msp:rw
+    - /home/administrator/provision/generated/crypto/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls:/etc/hyperledger/fabric/tls:rw
+    - /var/run:/host/var/run:rw
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    networks:
+      fabric-net:
+        aliases:
+          - peer0.org2.example.com    
+    deploy:
+      update_config:
+        delay: 10s
+      placement:
+        constraints: [node.hostname == brick29.blockchain.skcc.com]
+
+  peer1-org1-example-com:
+    image: nexus.sk.com/fabric-peer
+    command: peer node start
+    depends_on:
+    - couchdb1
+    environment:
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb1:5984
+      CORE_LEDGER_STATE_STATEDATABASE: CouchDB
+      CORE_LOGGING_LEVEL: DEBUG
+      CORE_PEER_ADDRESS: peer1.org1.example.com:7051
+      CORE_PEER_GOSSIP_BOOTSTRAP: peer0.org1.example.com:7051
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer1.org1.example.com:7051
+      CORE_PEER_GOSSIP_ORGLEADER: 'false'
+      CORE_PEER_GOSSIP_USELEADERELECTION: 'true'
+      CORE_PEER_ID: peer1.org1.example.com
+      CORE_PEER_LOCALMSPID: Org1MSP
+      CORE_PEER_PROFILE_ENABLED: 'true'
+      CORE_PEER_TLS_CERT_FILE: /etc/hyperledger/fabric/tls/server.crt
+      CORE_PEER_TLS_ENABLED: 'true'
+      CORE_PEER_TLS_KEY_FILE: /etc/hyperledger/fabric/tls/server.key
+      CORE_PEER_TLS_ROOTCERT_FILE: /etc/hyperledger/fabric/tls/ca.crt
+      CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE: fabric-net
+      CORE_VM_ENDPOINT: unix:///host/var/run/docker.sock
+    ports:
+    - 8051:7051
+    - 8053:7053
+    volumes:
+    - /home/administrator/provision/generated/crypto/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/msp:/etc/hyperledger/fabric/msp:rw
+    - /home/administrator/provision/generated/crypto/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls:/etc/hyperledger/fabric/tls:rw
+    - /var/run:/host/var/run:rw
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    networks:
+      fabric-net:
+        aliases:
+          - peer1.org1.example.com
+    deploy:
+      update_config:
+        delay: 10s
+      placement:
+        constraints: [node.hostname == brick29.blockchain.skcc.com]  
+
+  peer1-org2-example-com:
+    image: nexus.sk.com/fabric-peer
+    command: peer node start
+    depends_on:
+    - couchdb3
+    environment:
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb3:5984
+      CORE_LEDGER_STATE_STATEDATABASE: CouchDB
+      CORE_LOGGING_LEVEL: DEBUG
+      CORE_PEER_ADDRESS: peer1.org2.example.com:7051
+      CORE_PEER_GOSSIP_BOOTSTRAP: peer0.org2.example.com:7051
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer1.org2.example.com:7051
+      CORE_PEER_GOSSIP_ORGLEADER: 'false'
+      CORE_PEER_GOSSIP_USELEADERELECTION: 'true'
+      CORE_PEER_ID: peer1.org2.example.com
+      CORE_PEER_LOCALMSPID: Org2MSP
+      CORE_PEER_PROFILE_ENABLED: 'true'
+      CORE_PEER_TLS_CERT_FILE: /etc/hyperledger/fabric/tls/server.crt
+      CORE_PEER_TLS_ENABLED: 'true'
+      CORE_PEER_TLS_KEY_FILE: /etc/hyperledger/fabric/tls/server.key
+      CORE_PEER_TLS_ROOTCERT_FILE: /etc/hyperledger/fabric/tls/ca.crt
+      CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE: fabric-net
+      CORE_VM_ENDPOINT: unix:///host/var/run/docker.sock
+    ports:
+    - 10051:7051
+    - 10053:7053
+    volumes:
+    - /home/administrator/provision/generated/crypto/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/msp:/etc/hyperledger/fabric/msp:rw
+    - /home/administrator/provision/generated/crypto/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls:/etc/hyperledger/fabric/tls:rw
+    - /var/run:/host/var/run:rw
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    networks:
+      fabric-net:
+        aliases:
+          - peer1.org2.example.com
+    deploy:
+      update_config:
+        delay: 10s
+      placement:
+        constraints: [node.hostname == brick29.blockchain.skcc.com]
+
+
+# volumes: {}
