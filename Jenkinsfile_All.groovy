@@ -1,5 +1,5 @@
 // Declarative 
-pipeline {
+pipeline { 
 	agent any
 	environment {
 		REPO_TOKEN = credentials('docker-nexus-admin')
