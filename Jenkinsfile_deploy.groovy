@@ -2,10 +2,10 @@
 pipeline {
 	agent any
 	stages {
-		stage('Deploy') {
-                        environment{
+                environment{
                            DOCKER_SECRET = credentials('docker-nexus-admin')
                         }
+		stage('Deploy') {
 			steps {
                 echo "docker login (remote)"
 			    echo $DOCKER_SECRET
