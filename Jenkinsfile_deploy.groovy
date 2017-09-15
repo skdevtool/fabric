@@ -1,12 +1,12 @@
 // Declarative 
 pipeline {
 	agent any
-	stages {
-                environment{
+	environment{
                            DOCKER_SECRET = credentials('docker-nexus-admin')
-                        }
-		stage('Deploy') {
-			steps {
+                        
+            }
+	stages {
+	        steps {
                 echo "docker login (remote)"
 			    echo $DOCKER_SECRET
                             echo $DOCKER_SECRET_USR
